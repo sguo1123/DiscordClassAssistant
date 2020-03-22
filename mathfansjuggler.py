@@ -279,7 +279,7 @@ async def attendance(ctx, *, student_name):
     attendance_path = data_folder / 'Attendance' / f'attendance_{datetime.now().date()}.txt'
     attendance_path = PureWindowsPath(attendance_path)
     attendance_file = open(attendance_path, 'a')
-    attendance_file.write(f'{time_now.time()} {student_name}\n')
+    attendance_file.write(f'{time_now.time()} : {student_name}\n')
     attendance_file.close()
     await ctx.send(f'{student_name} is here')
 
