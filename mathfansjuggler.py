@@ -50,18 +50,6 @@ async def on_ready():
             name='with Numbers', type=discord.ActivityType.playing))
     print('Bot is ready.')
 
-
-# Checks for new member join and mutes them.
-@client.event
-async def on_voice_state_update(member, before, after):
-    guild_obj = get_guild(server_name)
-    # checks if in lesson mode
-    if lesson_mode:
-        if before.channel is None and after.channel is not None:
-            if member.id != instructor:
-                await guild_obj.get_member(member.id).edit(mute=True)
-
-
 # update instructor id
 @client.command()
 async def changeinstructor(ctx, id):
@@ -72,6 +60,16 @@ async def changeinstructor(ctx, id):
     else:
         instructor = int(id)
         await ctx.send(f'Instuctor ID set to {id}')
+
+# Checks for new member join and mutes them.
+@client.event
+async def on_voice_state_update(member, before, after):
+    guild_obj = get_guild(server_name)
+    # checks if in lesson mode
+    if lesson_mode:
+        if before.channel is None and after.channel is not None:
+            if member.id != instructor:
+                await guild_obj.get_member(member.id).edit(mute=True)
 
 
 # sub routine for done/forcedone to prompt next user
@@ -99,14 +97,14 @@ async def next(ctx):
             return
         member = guild_obj.get_member(user_queue[0].id)
         await guild_obj.get_member(member.id).edit(mute=False)
-        await ctx.send(f'{member} speak permissions set to True')
-        await ctx.send(f'{member} is now asking his/her question')
+        await ctx.send(f'{member.display_name} speak permissions set to True')
+        await ctx.send(f'{member.display_name} is now asking his/her question')
         return
     # if member is not found, pop and retry
     else:
         user_queue.pop(0)
         await ctx.send(
-            f'Unable to find {member} in voice channel, skipping to next user')
+            f'Unable to find {member.display_name} in voice channel, skipping to next user')
         await next(ctx)
         return
 
@@ -142,7 +140,6 @@ async def done(ctx):
         await ctx.send('Class is not in session.')
         return
 
-    print(f'queue length {len(user_queue)} and queue is {user_queue}')
     # if user queue empty
     if not user_queue:
         await ctx.send('No math fans in line!')
@@ -153,10 +150,10 @@ async def done(ctx):
         # if user in voice channel, mute
         if ctx.author in get_channel('general').members:
             await guild_obj.get_member(member.id).edit(mute=True)
-            await ctx.send(f'{member} muted')
+            await ctx.send(f'{member.display_name} muted')
         await ctx.author.edit(mute=True)
         await ctx.send(
-            f'{user_popped} is no longer in line and is now muted.')
+            f'{user_popped.display_name} is no longer in line and is now muted.')
         await ctx.send(
             f'There are {len(user_queue)} math fans in line.')
         # [Auto Mode] next user into their question
@@ -183,9 +180,9 @@ async def forcedone(ctx):
         # if user in voice channel, unmute
         if member in get_channel('general').members:
             await guild_obj.get_member(member.id).edit(mute=True)
-            await ctx.send(f'{member} muted')
+            await ctx.send(f'{member.display_name} muted')
         await ctx.send(
-            f'{user_popped} is no longer in line and is now muted.')
+            f'{user_popped.display_name} is no longer in line and is now muted.')
         await ctx.send(
             f'There are {len(user_queue)} math fans in line.')
 
@@ -214,23 +211,23 @@ async def talk(ctx):
 
     # if user already in line, do nothing
     if ctx.author in user_queue:
-        await ctx.send(f'{ctx.author} already in line')
+        await ctx.send(f'{ctx.author.display_name} already in line')
         return
 
     # if user queue empty
     if not user_queue:
         user_queue.append(ctx.author)
-        await ctx.send(f'{ctx.author} has been added to the queue')
+        await ctx.send(f'{ctx.author.display_name} has been added to the queue')
         if question_mode == 'auto':
             # unmute member if in the voice channel, unmute
             if member in get_channel('General').members:
                 await guild_obj.get_member(member.id).edit(mute=False)
-                await ctx.send(f'{member} unmuted')
-            await ctx.send(f'No math fans in line. {ctx.author} unmuted.')
+                await ctx.send(f'{member.display_name} unmuted')
+            await ctx.send(f'No math fans in line. {ctx.author.display_name} unmuted.')
     else:
         user_queue.append(ctx.author)
         await ctx.send(
-            f'{ctx.author} there are {len(user_queue) - 1} math fans ahead of you in line.')
+            f'{ctx.author.display_name} there are {len(user_queue) - 1} math fans ahead of you in line.')
 
 
 # starts class
@@ -279,9 +276,10 @@ async def attendance(ctx, *, student_name):
     attendance_path = data_folder / 'Attendance' / f'attendance_{datetime.now().date()}.txt'
     attendance_path = PureWindowsPath(attendance_path)
     attendance_file = open(attendance_path, 'a')
-    attendance_file.write(f'{time_now.time()} : {student_name}\n')
+    attendance_file.write(f'{time_now.time()} {student_name}\n')
     attendance_file.close()
     await ctx.send(f'{student_name} is here')
+
 
 # poll command for creating new polls
 @client.command()
@@ -313,6 +311,15 @@ client.remove_command('help')
 async def help(ctx):
     await bothelp(ctx)
 
+# clears user queue for questions
+@client.command()
+async def clearqueue(ctx):
+    if ctx.message.author.id != instructor:
+        await ctx.send('Missing Permissions. Please check !help')
+        return
+    global user_queue
+    user_queue = []
+    await ctx.send('Queue has been cleared.')
 
 # bothelp command with refrence for users
 @client.command()
@@ -329,7 +336,7 @@ async def bothelp(ctx):
         instructor_embed.add_field(name='!qauto', value='changes questions to cycle automatically', inline=False)
         instructor_embed.add_field(name='!qsingle', value='changes questions to cycle one at a time', inline=False)
         instructor_embed.add_field(name='!next', value='cycles to the next student in line', inline=False)
-        instructor_embed.add_field(name='!changeinstructor {instructor_id}', value='changes instructor to new instructor based on id', inline=False)
+        instructor_embed.add_field(name='!clearqueue', value='clears voice queue for questions', inline=False)
 
         await ctx.send(embed=instructor_embed)
 
