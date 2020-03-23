@@ -67,7 +67,7 @@ async def on_voice_state_update(member, before, after):
 async def changeinstructor(ctx, id):
     global instructor
     if ctx.message.author.id != instructor:
-        await ctx.send('Missing Permissions. Please check !bothelp')
+        await ctx.send('Missing Permissions. Please check !help')
         return
     else:
         instructor = int(id)
@@ -80,7 +80,7 @@ async def next(ctx):
     guild_obj = get_guild(server_name)
     # checks user permissions
     if ctx.message.author.id != instructor:
-        await ctx.send('Missing Permissions. Please check !bothelp')
+        await ctx.send('Missing Permissions. Please check !help')
         return
     # checks if queue has Users
     if not user_queue:
@@ -116,7 +116,7 @@ async def next(ctx):
 async def qauto(ctx):
     # checks user permissions
     if ctx.message.author.id != instructor:
-        await ctx.send('Missing Permissions. Please check !bothelp')
+        await ctx.send('Missing Permissions. Please check !help')
         return
     global question_mode
     question_mode = 'auto'
@@ -127,7 +127,7 @@ async def qauto(ctx):
 async def qsingle(ctx):
     # checks user permissions
     if ctx.message.author.id != instructor:
-        await ctx.send('Missing Permissions. Please check !bothelp')
+        await ctx.send('Missing Permissions. Please check !help')
         return
     global question_mode
     question_mode = 'single'
@@ -172,7 +172,7 @@ async def done(ctx):
 async def forcedone(ctx):
     guild_obj = get_guild(server_name)
     if ctx.message.author.id != instructor:
-        await ctx.send('Missing Permissions. Please check !bothelp')
+        await ctx.send('Missing Permissions. Please check !help')
         return
 
     if not user_queue:
@@ -238,7 +238,7 @@ async def talk(ctx):
 async def start(ctx):
     guild_obj = get_guild(server_name)
     if ctx.message.author.id != instructor:
-        await ctx.send('Missing Permissions. Please check !bothelp')
+        await ctx.send('Missing Permissions. Please check !help')
         return
 
     # sets lesson mode
@@ -257,7 +257,7 @@ async def start(ctx):
 async def end(ctx):
     guild_obj = get_guild(server_name)
     if ctx.message.author.id != instructor:
-        await ctx.send('Missing Permissions. Please check !bothelp')
+        await ctx.send('Missing Permissions. Please check !help')
         return
 
     # sets lesson mode
@@ -305,6 +305,14 @@ async def poll(ctx, *, input_string):
     for indx, val in enumerate(answers):
         await msg.add_reaction(emoji_list[indx])
     await ctx.message.delete()
+
+
+# change default help commands
+client.remove_command('help')
+@client.command()
+async def help(ctx):
+    await bothelp(ctx)
+
 
 # bothelp command with refrence for users
 @client.command()
