@@ -74,7 +74,9 @@ Command | Function
 **!qauto** | changes questions to cycle automatically
 **!qsingle** | changes questions to cycle one at a time
 **!next** | cycles to the next student in line
+**!clearqueue** | clears current queue for Students
 **!changeinstructor {instructor_id}** | changes the current instructor to a new instructor
+**!changechannel {channel_id}** | changes the current active voice channel to new channel
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
