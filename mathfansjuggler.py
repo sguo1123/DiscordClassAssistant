@@ -278,7 +278,7 @@ async def attendance(ctx, *, student_name):
     attendance_file = open(attendance_path, 'a')
     attendance_file.write(f'{time_now.time()} {student_name}\n')
     attendance_file.close()
-    await ctx.send(f'{student_name} is here')
+    await ctx.message.add_reaction("✅")
 
 
 # poll command for creating new polls
@@ -314,12 +314,19 @@ async def help(ctx):
 # clears user queue for questions
 @client.command()
 async def clearqueue(ctx):
+    guild_obj = get_guild(server_name)
     if ctx.message.author.id != instructor:
         await ctx.send('Missing Permissions. Please check !help')
         return
     global user_queue
     user_queue = []
     await ctx.send('Queue has been cleared.')
+
+    # mutes everyone if cleared while unmuted
+    for member in get_channel('General').members:
+        if member.id != instructor:
+            await guild_obj.get_member(member.id).edit(mute=True)
+
 
 # bothelp command with refrence for users
 @client.command()
