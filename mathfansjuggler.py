@@ -123,6 +123,39 @@ async def next(ctx):
         return
 
 
+# auto next bypass instructor checks
+@client.command()
+async def forcenext(ctx):
+    guild_obj = get_guild(ctx.guild.name)
+    # checks if queue has Users
+    if not user_queue:
+        await ctx.send('Queue Empty')
+        return
+    member = guild_obj.get_member(user_queue[0].id)
+    # unmute user in voice channel
+    if member in guild_obj.get_channel(current_voice_channel).members:
+        print(member.voice.mute)
+        if not member.voice.mute:
+            await forcedone(ctx)
+        if lesson_mode == 'auto':
+            return
+        if not user_queue:
+            await ctx.send('Queue Empty')
+            return
+        member = guild_obj.get_member(user_queue[0].id)
+        await guild_obj.get_member(member.id).edit(mute=False)
+        await ctx.send(f'{member.display_name} speak permissions set to True')
+        await ctx.send(f'{member.display_name} is now asking his/her question')
+        return
+    # if member is not found, pop and retry
+    else:
+        user_queue.pop(0)
+        await ctx.send(
+            f'Unable to find {member.display_name} in voice channel, skipping to next user')
+        await forcenext(ctx)
+        return
+
+
 # commands to change question_mode
 @client.command()
 async def qauto(ctx):
@@ -172,7 +205,7 @@ async def done(ctx):
             f'There are {len(user_queue)} math fans in line.')
         # [Auto Mode] next user into their question
         if question_mode == 'auto':
-            await next(ctx)
+            await forcenext(ctx)
     # if user isnt currently the person talking
     else:
         await ctx.send('You are not currently talking')
