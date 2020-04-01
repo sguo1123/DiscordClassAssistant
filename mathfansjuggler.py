@@ -296,7 +296,7 @@ async def start(ctx):
         if member.id != instructor:
             await guild_obj.get_member(member.id).edit(mute=True)
 
-    await ctx.send('Lesson Started! All users muted')
+    await ctx.send('Lesson Started! All users muted. Hello Math Fans!')
 
 
 # ends class
@@ -314,7 +314,7 @@ async def end(ctx):
     for member in guild_obj.get_channel(current_voice_channel).members:
         await guild_obj.get_member(member.id).edit(mute=False)
 
-    await ctx.send('All users unmuted')
+    await ctx.send('All users unmuted.  That\'s all for now!')
 
 
 # command to count attendence
@@ -342,7 +342,7 @@ async def poll(ctx, *, input_string):
     input_question = input_list[0] + '?'
     answers = input_list[1].split(':')
     emoji_list = ["🐌", "🐇", "🐘", "🐖", "🐏", "🐍", "🐬"]
-    output_list = [f"Poll: {input_question}\n"]
+    output_list = [f"Poll: {input_question} [By: {ctx.author.display_name}]\n"]
     if len(answers) > 7:
         await ctx.send('Too many answers, please reduce the number of answers.')
         return
