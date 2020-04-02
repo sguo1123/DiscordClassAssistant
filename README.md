@@ -32,7 +32,7 @@ To start your instance of the bot some changes are needed to the main python fil
 
 Open `config.ini` with a text editor such as notepad, notepad++, etc.
 
-On download, lines 9-11 should look like:
+On download, the file should look like:
 ```ini
 [DEFAULT]
 Token = your_bot_token_here
@@ -46,7 +46,7 @@ You will need to change these values to:
 2. Your personal **client_id** which can be found by right clicking your username in any discord chat and selecting 'copy id' at the bottom (Discord Developer Mode must be enabled)
 3. Your guilds **voicechannel_id** where the bot will mute or unmute students which can be found by right clicking the channel and selecting 'copy id' at the bottom (Discord Developer Mode must be enabled)
 
-The resulting code block should look something like this:
+The resulting file should look something like this:
 ```ini
 [DEFAULT]
 Token = D43f5y0ahjqew82jZ4NViEr2YafMKhue
