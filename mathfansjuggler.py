@@ -1,14 +1,19 @@
 import discord
 import os
+import configparser
 from datetime import datetime
 from discord.ext import commands
 from pathlib import Path, PureWindowsPath
 
 client = commands.Bot(command_prefix='!')
 
-# Change Per Server Deployment
-token = 'bot_token'
-instructor = 000000000000000000
+# Read config files
+config = configparser.ConfigParser()
+config.read('config.ini')
+token = config.get('DEFAULT', 'Token')
+instructor = config.get('DEFAULT', 'Instructor')
+current_voice_channel = int(config.get('DEFAULT', 'CurrentVoiceChannel'))
+question_mode = config.get('DEFAULT', 'QuestionMode')
 
 
 # New Data Class To Handle Student Attendance
@@ -27,10 +32,8 @@ class Student:
 
 # Default values
 user_queue = []
-question_mode = 'single'
 lesson_mode = None
 attendance_list = []
-current_voice_channel = 0
 
 
 def get_channel(channel_str):

@@ -30,25 +30,29 @@ Instructions Sourced from: [Dungeon Dev](https://www.devdungeon.com/content/make
 ## Usage
 To start your instance of the bot some changes are needed to the main python file.
 
-Open mathfansjuggler.py with a text editor such as notepad, notepad++, etc.
+Open `config.ini` with a text editor such as notepad, notepad++, etc.
 
 On download, lines 9-11 should look like:
-```python
-# Change Per Server Deployment
-token = 'bot_token'
-instructor = 000000000000000000
+```ini
+[DEFAULT]
+Token = your_bot_token_here
+Instructor = instructor_id
+CurrentVoiceChannel = voicechannel_id
+QuestionMode = single   #single or auto
 ```
 
 You will need to change these values to:
 1. Your personal **token** found when you created the bot account on discord (see Installation)
-2. Your personal **client_id** which can be found by right clicking your username in any discord chat and selecting 'copy id' at the bottom
-3. The name of the server where you would like to use this bot
+2. Your personal **client_id** which can be found by right clicking your username in any discord chat and selecting 'copy id' at the bottom (Discord Developer Mode must be enabled)
+3. Your guilds **voicechannel_id** where the bot will mute or unmute students which can be found by right clicking the channel and selecting 'copy id' at the bottom (Discord Developer Mode must be enabled)
 
 The resulting code block should look something like this:
-```python
-# Change Per Server Deployment
-token = 'D43f5y0ahjqew82jZ4NViEr2YafMKhue'
-instructor = 307362705684299777
+```ini
+[DEFAULT]
+Token = D43f5y0ahjqew82jZ4NViEr2YafMKhue
+Instructor = 123456789012345
+CurrentVoiceChannel = 23456789012345
+QuestionMode = single   #single or auto
 ```
 
 Once you have verified that the submitted information is correct, save and exit. Then run the attached 'run.bat'
