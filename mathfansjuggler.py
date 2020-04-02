@@ -19,15 +19,15 @@ question_mode = config.get('DEFAULT', 'QuestionMode')
 # New Data Class To Handle Student Attendance
 class Student:
     def __init__(self, s_name):
-        Student.name = s_name
-        Student.timein = ''
-        Student.timeout = ''
+        self.name = s_name
+        self.timein = ''
+        self.timeout = ''
 
     def timein(self, in_string):
-        Student.timein = in_string
+        self.timein = in_string
 
     def timeout(self, in_string):
-        Student.timeout = in_string
+        self.timeout = in_string
 
 
 # Default values
@@ -68,6 +68,16 @@ async def on_ready():
         activity=discord.Activity(
             name='with Numbers', type=discord.ActivityType.playing))
     print('Bot is ready.')
+
+
+# command to close bot
+@client.command()
+async def botstop(ctx):
+    if ctx.message.author.id != instructor:
+        await ctx.send('Nice Try')
+        return
+    await ctx.send('Bye Bye')
+    await client.logout()
 
 
 # change active voice channel
@@ -350,6 +360,7 @@ async def end(ctx):
 # command to count attendance
 @client.command()
 async def attendance(ctx, *, name: str = None):
+    global attendance_list
     if lesson_mode is None or lesson_mode is False:
         await ctx.send('Class is not in session, please wait for the instructor to start class!')
         return
@@ -384,6 +395,7 @@ async def join(ctx):
 # end of class Student
 @client.command()
 async def leave(ctx):
+    global attendance_list
     time_now = datetime.now()
     if lesson_mode is None or lesson_mode is False:
         await ctx.send('Class is not in session! Please wait for the instructor to start class.')
@@ -397,7 +409,7 @@ async def leave(ctx):
             await flushattendance(ctx)
             await ctx.message.add_reaction("✅")
             return
-    await ctx.send('You did not sign in!')
+    await ctx.send('Student did not sign in!')
 
 
 # alternative to leave
@@ -409,6 +421,7 @@ async def goodbye(ctx):
 # get attendance list
 @client.command()
 async def flushattendance(ctx):
+    global attendance_list
     normpath = os.path.normpath(os.getcwd())
     data_folder = Path(normpath)
     attendance_path = data_folder / 'Attendance' / f'attendance_{ctx.guild.name}_{datetime.now().date()}.txt'
