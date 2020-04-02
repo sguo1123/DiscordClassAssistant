@@ -23,7 +23,7 @@ python -m pip install discord.py
 ```
 
 #### Download and extract source files
-Download the compressed ZIP file [here](https://github.com/sguo1123/MathFansJuggler/archive/master.zip) and unzip into another folder.
+Download the compressed ZIP file [here](https://github.com/sguo1123/MathFansJuggler/archive/master.zip) and unzip.
 
 Instructions Sourced from: [Dungeon Dev](https://www.devdungeon.com/content/make-discord-bot-python)
 
@@ -32,12 +32,11 @@ To start your instance of the bot some changes are needed to the main python fil
 
 Open mathfansjuggler.py with a text editor such as notepad, notepad++, etc.
 
-On download, lines 9-12 should look like:
+On download, lines 9-11 should look like:
 ```python
 # Change Per Server Deployment
 token = 'bot_token'
-instructor = 307362705684299777
-server_name = 'Test Server'
+instructor = 000000000000000000
 ```
 
 You will need to change these values to:
@@ -50,7 +49,6 @@ The resulting code block should look something like this:
 # Change Per Server Deployment
 token = 'D43f5y0ahjqew82jZ4NViEr2YafMKhue'
 instructor = 307362705684299777
-server_name = 'My Test Server'
 ```
 
 Once you have verified that the submitted information is correct, save and exit. Then run the attached 'run.bat'
@@ -60,7 +58,8 @@ Once you have verified that the submitted information is correct, save and exit.
 For the Student:
 Command | Function
 ------------ | -------------
-**!attendance {student name}** | logs the student to the attendance log
+**!attendance or !join** | logs the student to the attendance log
+**!leave** | signs student out at end of class
 **!talk** | adds the user to the voice queue
 **!done** | removes the user from the voice queue
 **!queue** | shows current queue to ask questions

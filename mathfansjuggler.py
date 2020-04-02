@@ -8,8 +8,7 @@ client = commands.Bot(command_prefix='!')
 
 # Change Per Server Deployment
 token = 'bot_token'
-instructor = 307362705684299777
-current_voice_channel = 0
+instructor = 000000000000000000
 
 
 # New Data Class To Handle Student Attendance
@@ -31,6 +30,7 @@ user_queue = []
 question_mode = 'single'
 lesson_mode = None
 attendance_list = []
+current_voice_channel = 0
 
 
 def get_channel(channel_str):
