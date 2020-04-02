@@ -11,7 +11,7 @@ client = commands.Bot(command_prefix='!')
 config = configparser.ConfigParser()
 config.read('config.ini')
 token = config.get('DEFAULT', 'Token')
-instructor = config.get('DEFAULT', 'Instructor')
+instructor = int(config.get('DEFAULT', 'Instructor'))
 current_voice_channel = int(config.get('DEFAULT', 'CurrentVoiceChannel'))
 question_mode = config.get('DEFAULT', 'QuestionMode')
 
