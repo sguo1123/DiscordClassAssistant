@@ -346,7 +346,7 @@ async def end(ctx):
 
 # command to count attendance
 @client.command()
-async def attendance(ctx):
+async def attendance(ctx, *, name: str = None):
     if lesson_mode is None or lesson_mode is False:
         await ctx.send('Class is not in session, please wait for the instructor to start class!')
         return
@@ -394,7 +394,13 @@ async def leave(ctx):
             await flushattendance(ctx)
             await ctx.message.add_reaction("✅")
             return
-    await ctx.send('Student did not sign in!')
+    await ctx.send('You did not sign in!')
+
+
+# alternative to leave
+@client.command()
+async def goodbye(ctx):
+    await leave(ctx)
 
 
 # get attendance list
@@ -405,7 +411,7 @@ async def flushattendance(ctx):
     attendance_path = data_folder / 'Attendance' / f'attendance_{ctx.guild.name}_{datetime.now().date()}.txt'
     attendance_path = PureWindowsPath(attendance_path)
     attendance_file = open(attendance_path, 'w')
-    attendance_file.write('   Name    |    Time In    |     Time Out    \n')
+    attendance_file.write('Name | Time In | Time Out \n')
     for x in attendance_list:
         attendance_file.write(f'{x.name} | {x.timein} | {x.timeout}\n')
     attendance_file.close()
@@ -487,7 +493,7 @@ async def bothelp(ctx):
         )
         embed.set_thumbnail(url='https://i.imgur.com/v8CwNn0.png')
         embed.add_field(name='!attendance or !join', value='logs the student to the attendance log', inline=False)
-        embed.add_field(name='!leave', value='logs the student leaving the attendance log')
+        embed.add_field(name='!leave or !goodbye', value='logs the student leaving the attendance log')
         embed.add_field(name='!talk', value='adds the user to the voice queue', inline=False)
         embed.add_field(name='!done', value='removes the user from the voice queue', inline=False)
         embed.add_field(name='!queue', value='shows current queue to ask questions', inline=False)
