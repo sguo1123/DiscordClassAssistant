@@ -12,6 +12,27 @@ instructor = 307362705684299777
 current_voice_channel = 0
 
 
+# New Data Class To Handle Student Attendance
+class Student:
+    def __init__(self, s_name):
+        Student.name = s_name
+        Student.timein = ''
+        Student.timeout = ''
+
+    def timein(self, in_string):
+        Student.timein = in_string
+
+    def timeout(self, in_string):
+        Student.timeout = in_string
+
+
+# Default values
+user_queue = []
+question_mode = 'single'
+lesson_mode = None
+attendance_list = []
+
+
 def get_channel(channel_str):
     for guild in client.guilds:
         for channel in guild.channels:
@@ -23,12 +44,6 @@ def get_guild(guild_str):
     for guild in client.guilds:
         if guild.name == guild_str:
             return guild
-
-
-# Default values
-user_queue = []
-question_mode = 'single'
-lesson_mode = None
 
 
 # Subroutine to change lesson_mode
@@ -55,13 +70,16 @@ async def on_ready():
 # change active voice channel
 @client.command()
 async def changechannel(ctx, channel_id):
+    global attendance_list
     global current_voice_channel
     if ctx.message.author.id != instructor:
         await ctx.send('Missing Permissions. Please check !help')
         return
     else:
         current_voice_channel = int(channel_id)
-        await ctx.send(f'Current voice channel set to {channel_id}')
+        attendance_list.clear()
+        await ctx.message.delete(delay=5.0)
+        await ctx.send(f'Current voice channel set to {channel_id}', delete_after=5.0)
 
 
 # update instructor id
@@ -314,21 +332,83 @@ async def end(ctx):
     for member in guild_obj.get_channel(current_voice_channel).members:
         await guild_obj.get_member(member.id).edit(mute=False)
 
+    # signing students off
+    time_now = datetime.now()
+    for x in attendance_list:
+        if x.timeout == '':
+            x.timeout = f"{time_now.time()} [*]"
+
+    # flush attendance list
+
+    await flushattendance(ctx)
     await ctx.send('All users unmuted.  That\'s all for now!')
 
 
-# command to count attendence
+# command to count attendance
 @client.command()
-async def attendance(ctx, *, student_name):
-    time_now = datetime.now()
+async def attendance(ctx):
+    if lesson_mode is None or lesson_mode is False:
+        await ctx.send('Class is not in session, please wait for the instructor to start class!')
+        return
     normpath = os.path.normpath(os.getcwd())
     data_folder = Path(normpath)
     attendance_path = data_folder / 'Attendance' / f'attendance_{ctx.guild.name}_{datetime.now().date()}.txt'
     attendance_path = PureWindowsPath(attendance_path)
+    for x in attendance_list:
+        if x.name == ctx.author.display_name:
+            await ctx.send('You are already signed in!')
+            return
+    attendance_list.append(Student(ctx.author.display_name))
+    time_now = datetime.now()
+    for x in attendance_list:
+        if x.name == ctx.author.display_name:
+            x.timein = time_now.time()
+    if not os.path.exists(attendance_path):
+        attendance_file = open(attendance_path, 'a')
+        attendance_file.write('   Name    |    Time In    |     Time Out    \n')
     attendance_file = open(attendance_path, 'a')
-    attendance_file.write(f'{time_now.time()} {student_name}\n')
+    attendance_file.write(f'{ctx.author.display_name} | {time_now.time()} | \n')
     attendance_file.close()
     await ctx.message.add_reaction("✅")
+
+
+# alternate command phrase for attendance
+@client.command()
+async def join(ctx):
+    await attendance(ctx)
+
+
+# end of class Student
+@client.command()
+async def leave(ctx):
+    time_now = datetime.now()
+    if lesson_mode is None or lesson_mode is False:
+        await ctx.send('Class is not in session! Please wait for the instructor to start class.')
+        return
+    for x in attendance_list:
+        if x.name == ctx.author.display_name:
+            if x.timeout != '':
+                await ctx.send('You have already signed out!')
+                return
+            x.timeout = time_now.time()
+            await flushattendance(ctx)
+            await ctx.message.add_reaction("✅")
+            return
+    await ctx.send('Student did not sign in!')
+
+
+# get attendance list
+@client.command()
+async def flushattendance(ctx):
+    normpath = os.path.normpath(os.getcwd())
+    data_folder = Path(normpath)
+    attendance_path = data_folder / 'Attendance' / f'attendance_{ctx.guild.name}_{datetime.now().date()}.txt'
+    attendance_path = PureWindowsPath(attendance_path)
+    attendance_file = open(attendance_path, 'w')
+    attendance_file.write('   Name    |    Time In    |     Time Out    \n')
+    for x in attendance_list:
+        attendance_file.write(f'{x.name} | {x.timein} | {x.timeout}\n')
+    attendance_file.close()
 
 
 # poll command for creating new polls
@@ -406,7 +486,8 @@ async def bothelp(ctx):
             color=discord.Colour.blue()
         )
         embed.set_thumbnail(url='https://i.imgur.com/v8CwNn0.png')
-        embed.add_field(name='!attendance {student name}', value='logs the student to the attendance log', inline=False)
+        embed.add_field(name='!attendance or !join', value='logs the student to the attendance log', inline=False)
+        embed.add_field(name='!leave', value='logs the student leaving the attendance log')
         embed.add_field(name='!talk', value='adds the user to the voice queue', inline=False)
         embed.add_field(name='!done', value='removes the user from the voice queue', inline=False)
         embed.add_field(name='!queue', value='shows current queue to ask questions', inline=False)
