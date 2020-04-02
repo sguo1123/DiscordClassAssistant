@@ -336,7 +336,7 @@ async def end(ctx):
     time_now = datetime.now()
     for x in attendance_list:
         if x.timeout == '':
-            x.timeout = f"{time_now.time()} [*]"
+            x.timeout = f"{time_now.strftime('%X')} [*]"
 
     # flush attendance list
 
@@ -362,12 +362,12 @@ async def attendance(ctx):
     time_now = datetime.now()
     for x in attendance_list:
         if x.name == ctx.author.display_name:
-            x.timein = time_now.time()
+            x.timein = time_now.strftime("%X")
     if not os.path.exists(attendance_path):
         attendance_file = open(attendance_path, 'a')
-        attendance_file.write('   Name    |    Time In    |     Time Out    \n')
+        attendance_file.write('Name | Time In | Time Out\n')
     attendance_file = open(attendance_path, 'a')
-    attendance_file.write(f'{ctx.author.display_name} | {time_now.time()} | \n')
+    attendance_file.write(f'{ctx.author.display_name} | {time_now.strftime("%X")} | \n')
     attendance_file.close()
     await ctx.message.add_reaction("✅")
 
@@ -390,7 +390,7 @@ async def leave(ctx):
             if x.timeout != '':
                 await ctx.send('You have already signed out!')
                 return
-            x.timeout = time_now.time()
+            x.timeout = time_now.strftime("%X")
             await flushattendance(ctx)
             await ctx.message.add_reaction("✅")
             return
