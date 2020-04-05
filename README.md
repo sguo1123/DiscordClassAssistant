@@ -67,7 +67,8 @@ Command | Function
 **!talk** | adds the user to the voice queue
 **!done** | removes the user from the voice queue
 **!queue** | shows current queue to ask questions
-**!poll** | creates a reaction poll with format [!poll <question>? <option1>:<option2>]
+**!poll** | creates a reaction poll with format [!poll question? option1:option2]
+**!equation `latex equation`** | renders latex equation as image in chat
 
 For the Instructor:
 Command | Function

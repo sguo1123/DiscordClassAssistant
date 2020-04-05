@@ -1,6 +1,7 @@
 import discord
 import os
 import configparser
+import re
 from datetime import datetime
 from discord.ext import commands
 from pathlib import Path, PureWindowsPath
@@ -480,6 +481,28 @@ async def clearqueue(ctx):
             await guild_obj.get_member(member.id).edit(mute=True)
 
 
+# url formatter
+def urlify(string):
+    # Replace all runs of whitespace with a single dash
+    string = re.sub(r"\s+", '&space;', string)
+    string.replace("\\", "\\\\")
+    string = string[1:-1]
+    return string
+
+
+# equation render
+@client.command()
+async def equation(ctx, *, equation):
+    equation = urlify(equation)
+    equ_url = f'https://latex.codecogs.com/png.latex?\\dpi{{200}}&space;\\bg_white&space;{equation}'
+    print(equ_url)
+    equ = discord.Embed()
+    equ.set_image(url= equ_url)
+
+    await ctx.message.delete()
+    await ctx.send(embed=equ)
+
+
 # bothelp command with refrence for users
 @client.command()
 async def bothelp(ctx):
@@ -514,7 +537,7 @@ async def bothelp(ctx):
         embed.add_field(name='!done', value='removes the user from the voice queue', inline=False)
         embed.add_field(name='!queue', value='shows current queue to ask questions', inline=False)
         embed.add_field(name='!poll', value='creates a reaction poll with format [`!poll <question>? <option1>:<option2>`]', inline=False)
-
+        embed.add_field(name='!equation `LaTeX_Equation`', value='renders LaTeX equation as an image in chat', inline=False)
         await ctx.send(embed=embed)
 
 client.run(token)
