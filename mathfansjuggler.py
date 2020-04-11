@@ -6,7 +6,7 @@ from datetime import datetime
 from discord.ext import commands
 from pathlib import Path, PureWindowsPath
 
-client = commands.Bot(command_prefix='!')
+client = commands.Bot(command_prefix='!', case_insensitive=True)
 
 # Read config files
 config = configparser.ConfigParser()
