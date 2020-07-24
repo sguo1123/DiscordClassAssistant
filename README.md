@@ -23,7 +23,7 @@ python -m pip install discord.py
 ```
 
 #### Download and extract source files
-Download the compressed ZIP file [here](https://github.com/sguo1123/MathFansJuggler/archive/master.zip) and unzip.
+Download the compressed ZIP file [here](https://github.com/sguo1123/DiscordClassAssistant/archive/master.zip) and unzip.
 
 Instructions Sourced from: [Dungeon Dev](https://www.devdungeon.com/content/make-discord-bot-python)
 

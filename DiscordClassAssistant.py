@@ -1,4 +1,4 @@
-import discord
+studentsimport discord
 import os
 import configparser
 import re
@@ -222,7 +222,7 @@ async def done(ctx):
 
     # if user queue empty
     if not user_queue:
-        await ctx.send('No math fans in line!')
+        await ctx.send('No students in line!')
     # if user who is currently talking wants to stop
     elif ctx.message.author == user_queue[0]:
         user_popped = user_queue.pop(0)
@@ -235,7 +235,7 @@ async def done(ctx):
         await ctx.send(
             f'{user_popped.display_name} is no longer in line and is now muted.')
         await ctx.send(
-            f'There are {len(user_queue)} math fans in line.')
+            f'There are {len(user_queue)} students in line.')
         # [Auto Mode] next user into their question
         if question_mode == 'auto':
             await forcenext(ctx)
@@ -253,7 +253,7 @@ async def forcedone(ctx):
         return
 
     if not user_queue:
-        await ctx.send('No math fans in line!')
+        await ctx.send('No students in line!')
     else:
         user_popped = user_queue.pop(0)
         member = guild_obj.get_member(user_popped.id)
@@ -264,7 +264,7 @@ async def forcedone(ctx):
         await ctx.send(
             f'{user_popped.display_name} is no longer in line and is now muted.')
         await ctx.send(
-            f'There are {len(user_queue)} math fans in line.')
+            f'There are {len(user_queue)} students in line.')
 
 
 # shows queue
@@ -303,11 +303,11 @@ async def talk(ctx):
             if member in guild_obj.get_channel(current_voice_channel).members:
                 await guild_obj.get_member(member.id).edit(mute=False)
                 await ctx.send(f'{member.display_name} unmuted')
-            await ctx.send(f'No math fans in line. {ctx.author.display_name} unmuted.')
+            await ctx.send(f'No students in line. {ctx.author.display_name} unmuted.')
     else:
         user_queue.append(ctx.author)
         await ctx.send(
-            f'{ctx.author.display_name} there are {len(user_queue) - 1} math fans ahead of you in line.')
+            f'{ctx.author.display_name} there are {len(user_queue) - 1} students ahead of you in line.')
 
 
 # starts class
@@ -329,7 +329,7 @@ async def start(ctx):
         if member.id != instructor:
             await guild_obj.get_member(member.id).edit(mute=True)
 
-    await ctx.send('Lesson Started! All users muted. Hello Math Fans!')
+    await ctx.send('Lesson Started! All users muted. Hello students!')
 
 
 # ends class
