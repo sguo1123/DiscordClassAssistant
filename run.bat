@@ -1,2 +1,2 @@
-python ./mathfansjuggler.py
+python ./DiscordClassAssistant.py
 pause

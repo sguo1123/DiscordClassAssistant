@@ -1,6 +1,6 @@
-# MathFansJuggler
+# DiscordClassAssistant
 
-MathFanJuggler is a Python based Discord Bot to help with streaming/lecturing during COVID-19
+DiscordClassAssistant is a Python based Discord Bot to help with streaming/lecturing during COVID-19
 
 ## Installation
 #### Create a server
@@ -78,6 +78,8 @@ Command | Function
 **!qauto** | changes questions to cycle automatically
 **!qsingle** | changes questions to cycle one at a time
 **!next** | cycles to the next student in line
+**!setbreakout {num}** | creates new breakout room category and creates 'num' of rooms for Students
+**!clearbreakout** | removes breakout category and channels
 **!clearqueue** | clears current queue for Students
 **!changeinstructor {instructor_id}** | changes the current instructor to a new instructor
 **!changechannel {channel_id}** | changes the current active voice channel to new channel
