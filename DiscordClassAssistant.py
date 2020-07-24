@@ -1,4 +1,4 @@
-studentsimport discord
+import discord
 import os
 import configparser
 import re
@@ -15,8 +15,8 @@ token = config.get('DEFAULT', 'Token')
 instructor = int(config.get('DEFAULT', 'Instructor'))
 current_voice_channel = int(config.get('DEFAULT', 'CurrentVoiceChannel'))
 question_mode = config.get('DEFAULT', 'QuestionMode')
-# needs config integration
-categoryID = ''
+group_std = config.get('DEFAULT', 'GroupRoomNumber')
+category_name = ''
 
 # New Data Class To Handle Student Attendance
 class Student:
@@ -343,8 +343,8 @@ async def end(ctx):
     # sets lesson mode
     change_lesson_mode(False)
 
-    # removes breakout Rooms
-    await clearbreakout()
+    # removes cmall group channels
+    await cleargroup(ctx)
 
     # unmute all members in the voice channel
     for member in guild_obj.get_channel(current_voice_channel).members:
@@ -514,10 +514,10 @@ def RepresentsInt(x):
     except ValueError:
         return False
 
-# breakout rooms
+# makes small group rooms
 @client.command()
-async def setbreakout(ctx, *, num: str='3'):
-    global categoryID
+async def setgroup(ctx, *, num=str(group_std)):
+    global category_name
     guild_obj = get_guild(ctx.guild.name)
     if ctx.message.author.id != instructor:
         await ctx.send('Missing Permissions. Please check !help')
@@ -527,26 +527,67 @@ async def setbreakout(ctx, *, num: str='3'):
         return
     total = int(num)
     room = 1
-    categoryID = await ctx.guild.create_category("Breakout Rooms")
+    category_name = await ctx.guild.create_category("Breakout Rooms")
     while total > 0:
-        await ctx.guild.create_voice_channel(f'Room {room}', category=categoryID)
+        await ctx.guild.create_voice_channel(f'Room {room}', category=category_name)
         room = room + 1
         total = total - 1
     await ctx.message.add_reaction("✅")
 
-# clear breakout rooms
+# clears group rooms
 @client.command()
-async def clearbreakout(ctx):
-    global categoryID
+async def cleargroup(ctx):
+    global category_name
     guild_obj = get_guild(ctx.guild.name)
     if ctx.message.author.id != instructor:
         await ctx.send('Missing Permissions. Please check !help')
         return
-    for channel in categoryID.channels:
+    for channel in category_name.channels:
         await channel.delete()
-    await categoryID.delete()
+    await category_name.delete()
     await ctx.message.add_reaction("✅")
 
+# divide students into group rooms
+@client.command()
+async def group(ctx):
+    global category_name
+    guild_obj = get_guild(ctx.guild.name)
+    if ctx.message.author.id != instructor:
+        await ctx.send('Missing Permissions. Please check !help')
+        return
+    available_channels = []
+    current_users = []
+    i = 0
+    change_lesson_mode(False)
+    for channel in category_name.voice_channels:
+        available_channels.append(channel)
+    for user in guild_obj.get_channel(current_voice_channel).members:
+        current_users.append(user)
+    for moving_user in current_users:
+        await moving_user.move_to(available_channels[i])
+        if i < len(available_channels):
+            i += 1
+        else:
+            i = 0
+    await ctx.message.add_reaction("✅")
+
+# returns students to original room
+@client.command()
+async def regroup(ctx):
+    global category_name
+    guild_obj = get_guild(ctx.guild.name)
+    if ctx.message.author.id != instructor:
+        await ctx.send('Missing Permissions. Please check !help')
+        return
+    available_channels = []
+    for channel in category_name.voice_channels:
+        available_channels.append(channel)
+    change_lesson_mode(True)
+    for channels in available_channels:
+        for members in channels.members:
+            await members.move_to(guild_obj.get_channel(current_voice_channel))
+    await cleargroup(ctx)
+    await ctx.message.add_reaction("✅")
 
 # bothelp command with refrence for users
 @client.command()

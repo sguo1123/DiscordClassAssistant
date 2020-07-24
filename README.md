@@ -39,6 +39,7 @@ Token = your_bot_token_here
 Instructor = instructor_id
 CurrentVoiceChannel = voicechannel_id
 QuestionMode = single   #single or auto
+GroupRoomNumber = 3
 ```
 
 You will need to change these values to:
@@ -53,6 +54,7 @@ Token = D43f5y0ahjqew82jZ4NViEr2YafMKhue
 Instructor = 123456789012345
 CurrentVoiceChannel = 23456789012345
 QuestionMode = single   #single or auto
+GroupRoomNumber = 3
 ```
 
 Once you have verified that the submitted information is correct, save and exit. Then run the attached 'run.bat'
@@ -78,8 +80,9 @@ Command | Function
 **!qauto** | changes questions to cycle automatically
 **!qsingle** | changes questions to cycle one at a time
 **!next** | cycles to the next student in line
-**!setbreakout {num}** | creates new breakout room category and creates 'num' of rooms for Students
-**!clearbreakout** | removes breakout category and channels
+**!setgroup {num}** | creates new group room category and creates 'num' of rooms for Students
+**!group** | moves students from main room to group rooms - unmutes
+**!regroup** | moves students back into main room - mutes
 **!clearqueue** | clears current queue for Students
 **!changeinstructor {instructor_id}** | changes the current instructor to a new instructor
 **!changechannel {channel_id}** | changes the current active voice channel to new channel
