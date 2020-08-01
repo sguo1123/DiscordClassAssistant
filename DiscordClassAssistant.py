@@ -18,6 +18,10 @@ question_mode = config.get('DEFAULT', 'QuestionMode')
 group_std = config.get('DEFAULT', 'GroupRoomNumber')
 category_name = ''
 
+# New config file for class points
+points = configparser.ConfigParser()
+points.read('points.ini')
+
 # New Data Class To Handle Student Attendance
 class Student:
     def __init__(self, s_name):
@@ -625,5 +629,30 @@ async def bothelp(ctx):
         embed.add_field(name='!poll', value='creates a reaction poll with format [`!poll <question>? <option1>:<option2>`]', inline=False)
         embed.add_field(name='!equation `LaTeX_Equation`', value='renders LaTeX equation as an image in chat', inline=False)
         await ctx.send(embed=embed)
+
+# user points section
+@client.command()
+async def pointstop(ctx):
+    global points
+    student_keys = []
+    output_str = "```Class Points\nStudent Name - Number of Points\n"
+    for key in points['Class Points']:
+        student_keys.append(key)
+    student_keys.sort()
+    if !student_keys:
+        await ctx.send('No Data Found.')
+        return
+    for student in student_keys:
+        student_name =  student.ljust(12).capitalize()
+        student_pts = str(points['Class Points'][student])
+        output_str += f'{student_name} - {student_pts}\n'
+    output_str += "```"
+    await ctx.send(output_str)
+    await ctx.message.add_reaction("✅")
+
+# sample code for adding points/students/keys
+#points['Class Points'][f'{ctx.message.author.display_name}'] = '1'
+#with open('points.ini', 'w') as configfile:
+    #points.write(configfile)
 
 client.run(token)
