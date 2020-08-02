@@ -71,6 +71,8 @@ Command | Function
 **!queue** | shows current queue to ask questions
 **!poll** | creates a reaction poll with format [!poll question? option1:option2]
 **!equation `latex equation`** | renders latex equation as image in chat
+**!mypoints** | returns number of points tied to your account
+**!pointstop** | returns list of all points in class
 
 For the Instructor:
 Command | Function
@@ -86,6 +88,9 @@ Command | Function
 **!clearqueue** | clears current queue for Students
 **!changeinstructor {instructor_id}** | changes the current instructor to a new instructor
 **!changechannel {channel_id}** | changes the current active voice channel to new channel
+**!points {tag_user} {points}** | adds points for tagged user
+**!removepoints {tag_user} {points}** | removes points for tagged user - min is 0
+
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
