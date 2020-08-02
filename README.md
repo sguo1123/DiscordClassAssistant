@@ -72,7 +72,7 @@ Command | Function
 **!poll** | creates a reaction poll with format [!poll question? option1:option2]
 **!equation `latex equation`** | renders latex equation as image in chat
 **!mypoints** | returns number of points tied to your account
-**!pointstop** | returns list of all points in class
+**!pointslist** | returns list of all points in class
 
 For the Instructor:
 Command | Function

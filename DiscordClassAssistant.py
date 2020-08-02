@@ -1,6 +1,7 @@
 import discord
 import os
 import configparser
+import asyncio
 from datetime import datetime
 from pathlib import Path, PureWindowsPath
 from discord.ext import commands
@@ -16,7 +17,7 @@ current_voice_channel = int(config.get('DEFAULT', 'CurrentVoiceChannel'))
 question_mode = config.get('DEFAULT', 'QuestionMode')
 group_std = config.get('DEFAULT', 'GroupRoomNumber')
 category_name = ''
-active_extensions = ['points', 'equation']
+active_extensions = ['points', 'equation', 'helpmsg']
 
 # Attendance list storage
 attendance_list = []
@@ -44,7 +45,7 @@ async def unload(ctx, extension):
     client.unload_extension(f'extensions.{extension}')
 
 for filename in active_extensions:
-        client.load_extension(f'extensions.{filename}')
+    client.load_extension(f'extensions.{filename}')
 
 # Default values
 user_queue = []
@@ -395,12 +396,6 @@ async def poll(ctx, *, input_string):
         await msg.add_reaction(emoji_list[indx])
     await ctx.message.delete()
 
-# change default help commands
-client.remove_command('help')
-@client.command()
-async def help(ctx):
-    await bothelp(ctx)
-
 # clears user queue for questions
 @client.command()
 async def clearqueue(ctx):
@@ -572,42 +567,5 @@ async def regroup(ctx):
             await members.move_to(guild_obj.get_channel(current_voice_channel))
     await cleargroup(ctx)
     await ctx.message.add_reaction("✅")
-
-# bothelp command with refrence for users
-@client.command()
-async def bothelp(ctx):
-    if ctx.message.author.id == instructor:
-        instructor_embed = discord.Embed(
-            title='Instructor Comands',
-            description='Commands for Instructors',
-            color=discord.Colour.purple()
-            )
-        instructor_embed.set_thumbnail(url='https://i.imgur.com/v8CwNn0.png')
-        instructor_embed.add_field(name='!start', value='start class, will mute users in voice chat', inline=False)
-        instructor_embed.add_field(name='!end', value='ends class, will unmutes all users in voice chat', inline=False)
-        instructor_embed.add_field(name='!qauto', value='changes questions to cycle automatically', inline=False)
-        instructor_embed.add_field(name='!qsingle', value='changes questions to cycle one at a time', inline=False)
-        instructor_embed.add_field(name='!next', value='cycles to the next student in line', inline=False)
-        instructor_embed.add_field(name='!clearqueue', value='clears voice queue for questions', inline=False)
-        instructor_embed.add_field(name='!changechannel <channel_id>', value='changes current voice channel', inline=False)
-        instructor_embed.add_field(name='!changeinstructor <instructor_id>', value='changes current instructor', inline=False)
-
-        await ctx.send(embed=instructor_embed)
-
-    else:
-        embed = discord.Embed(
-            title='Student Commands',
-            description='Commands for Students',
-            color=discord.Colour.blue()
-        )
-        embed.set_thumbnail(url='https://i.imgur.com/v8CwNn0.png')
-        embed.add_field(name='!attendance or !join', value='logs the student to the attendance log', inline=False)
-        embed.add_field(name='!leave or !goodbye', value='logs the student leaving the attendance log')
-        embed.add_field(name='!talk', value='adds the user to the voice queue', inline=False)
-        embed.add_field(name='!done', value='removes the user from the voice queue', inline=False)
-        embed.add_field(name='!queue', value='shows current queue to ask questions', inline=False)
-        embed.add_field(name='!poll', value='creates a reaction poll with format [`!poll <question>? <option1>:<option2>`]', inline=False)
-        embed.add_field(name='!equation `LaTeX_Equation`', value='renders LaTeX equation as an image in chat', inline=False)
-        await ctx.send(embed=embed)
 
 client.run(token)

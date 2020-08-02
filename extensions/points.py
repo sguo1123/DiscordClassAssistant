@@ -1,6 +1,12 @@
 import discord
+import asyncio
+import configparser
 import json
 from discord.ext import commands
+
+config = configparser.ConfigParser()
+config.read('config.ini')
+instructor = int(config.get('DEFAULT', 'Instructor'))
 
 # New global dictionary to store points - flushes to points.json
 ptsDatabase = {}
@@ -11,8 +17,8 @@ class Points(commands.Cog):
         self.client = client
 
     # user points section
-    @commands.command(aliases=['ptstop'])
-    async def pointstop(self, ctx):
+    @commands.command(aliases=['ptslist'])
+    async def pointslist(self, ctx):
         global ptsDatabase
         with open('points.json') as f:
             ptsDatabase = json.load(f)
@@ -36,6 +42,9 @@ class Points(commands.Cog):
     @commands.command(aliases=['pts', 'addpts'])
     async def points(self, ctx, tagged_member : discord.Member, *, pts=1):
         global ptsDatabase
+        if ctx.message.author.id != instructor:
+            await ctx.send('Missing Permissions. Please check !help')
+            return
         if tagged_member.display_name in list(ptsDatabase.keys()):
             ptsDatabase[tagged_member.display_name] += pts
         else:
@@ -48,6 +57,9 @@ class Points(commands.Cog):
     @commands.command()
     async def removepoints(self, ctx, tagged_member : discord.Member, *, pts=1):
         global ptsDatabase
+        if ctx.message.author.id != instructor:
+            await ctx.send('Missing Permissions. Please check !help')
+            return
         if tagged_member.display_name in list(ptsDatabase.keys()):
             if ptsDatabase[tagged_member.display_name] > pts:
                 ptsDatabase[tagged_member.display_name] -= pts
