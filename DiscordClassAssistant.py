@@ -1,7 +1,6 @@
 import discord
 import os
 import configparser
-import re
 from datetime import datetime
 from pathlib import Path, PureWindowsPath
 from discord.ext import commands
@@ -17,7 +16,7 @@ current_voice_channel = int(config.get('DEFAULT', 'CurrentVoiceChannel'))
 question_mode = config.get('DEFAULT', 'QuestionMode')
 group_std = config.get('DEFAULT', 'GroupRoomNumber')
 category_name = ''
-active_extensions = ['points']
+active_extensions = ['points', 'equation']
 
 # Attendance list storage
 attendance_list = []
@@ -478,26 +477,6 @@ async def flushattendance(ctx):
     for x in attendance_list:
         attendance_file.write(f'{x.name} | {x.timein} | {x.timeout}\n')
     attendance_file.close()
-
-# url formatter
-def urlify(string):
-    # Replace all runs of whitespace with a single dash
-    string = re.sub(r"\s+", '&space;', string)
-    string.replace("\\", "\\\\")
-    string = string[1:-1]
-    return string
-
-# equation render
-@client.command()
-async def equation(ctx, *, equation):
-    equation = urlify(equation)
-    equ_url = f'https://latex.codecogs.com/png.latex?\\dpi{{200}}&space;\\bg_white&space;{equation}'
-    print(equ_url)
-    equ = discord.Embed()
-    equ.set_image(url= equ_url)
-
-    await ctx.message.delete()
-    await ctx.send(embed=equ)
 
 # int checker
 def RepresentsInt(x):
