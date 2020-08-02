@@ -387,7 +387,7 @@ async def end(ctx):
 
 
 # command to count attendance
-@client.command()
+@client.command(pass_context = True , aliases=['join'])
 async def attendance(ctx, *, name: str = None):
     global attendance_list
     if lesson_mode is None or lesson_mode is False:
@@ -415,14 +415,8 @@ async def attendance(ctx, *, name: str = None):
     await ctx.message.add_reaction("✅")
 
 
-# alternate command phrase for attendance
-@client.command()
-async def join(ctx):
-    await attendance(ctx)
-
-
 # end of class Student
-@client.command()
+@client.command(pass_context = True , aliases=['goodbye'])
 async def leave(ctx):
     global attendance_list
     time_now = datetime.now()
@@ -439,12 +433,6 @@ async def leave(ctx):
             await ctx.message.add_reaction("✅")
             return
     await ctx.send('Student did not sign in!')
-
-
-# alternative to leave
-@client.command()
-async def goodbye(ctx):
-    await leave(ctx)
 
 
 # get attendance list
@@ -664,7 +652,7 @@ async def bothelp(ctx):
 
 
 # user points section
-@client.command()
+@client.command(pass_context = True , aliases=['ptstop'])
 async def pointstop(ctx):
     global ptsDatabase
     with open('points.json') as f:
@@ -686,7 +674,7 @@ async def pointstop(ctx):
 
 
 # add points to students
-@client.command()
+@client.command(pass_context = True , aliases=['pts', 'addpts'])
 async def points(ctx, tagged_member : discord.Member, *, pts=1):
     global ptsDatabase
     if tagged_member.display_name in list(ptsDatabase.keys()):
@@ -713,7 +701,7 @@ async def removepoints(ctx, tagged_member : discord.Member, *, pts=1):
     await ctx.message.add_reaction("✅")
 
 # check personal points
-@client.command()
+@client.command(pass_context = True , aliases=['mypts'])
 async def mypoints(ctx):
     global ptsDatabase
     with open('points.json') as f:
