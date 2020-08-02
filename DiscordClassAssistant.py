@@ -2,10 +2,9 @@ import discord
 import os
 import configparser
 import re
-import json
 from datetime import datetime
-from discord.ext import commands
 from pathlib import Path, PureWindowsPath
+from discord.ext import commands
 
 client = commands.Bot(command_prefix='!', case_insensitive=True)
 
@@ -18,10 +17,10 @@ current_voice_channel = int(config.get('DEFAULT', 'CurrentVoiceChannel'))
 question_mode = config.get('DEFAULT', 'QuestionMode')
 group_std = config.get('DEFAULT', 'GroupRoomNumber')
 category_name = ''
+active_extensions = ['points']
 
-# New global dictionary to store points - flushes to points.json
-ptsDatabase = {}
-
+# Attendance list storage
+attendance_list = []
 
 # New Data Class To Handle Student Attendance
 class Student:
@@ -36,11 +35,21 @@ class Student:
     def timeout(self, in_string):
         self.timeout = in_string
 
+# Cogs - Load/Unload
+@client.command()
+async def load(ctx, extension):
+    client.load_extension(f'extensions.{extension}')
+
+@client.command()
+async def unload(ctx, extension):
+    client.unload_extension(f'extensions.{extension}')
+
+for filename in active_extensions:
+        client.load_extension(f'extensions.{filename}')
 
 # Default values
 user_queue = []
 lesson_mode = None
-attendance_list = []
 breakout_rdy = False
 
 def get_channel(channel_str):
@@ -49,30 +58,25 @@ def get_channel(channel_str):
             if channel.name == channel_str:
                 return channel
 
-
 def get_guild(guild_str):
     for guild in client.guilds:
         if guild.name == guild_str:
             return guild
-
 
 # Subroutine to change breakout status
 def change_breakout_mode(bool):
     global breakout_rdy
     breakout_rdy = bool
 
-
 # Subroutine to change lesson_mode
 def change_lesson_mode(bool):
     global lesson_mode
     lesson_mode = bool
 
-
 # Subroutine to change question_mode
 def change_question_mode(str):
     global question_mode
     question_mode = str
-
 
 # Bot activity + load up notifier
 @client.event
@@ -81,7 +85,6 @@ async def on_ready():
         activity=discord.Activity(
             name='with Numbers', type=discord.ActivityType.playing))
     print('Bot is ready.')
-
 
 # command to close bot
 @client.command()
@@ -105,14 +108,15 @@ async def on_command_error(ctx, error):
 # change active voice channel
 @client.command()
 async def changechannel(ctx, channel_id):
-    global attendance_list
     global current_voice_channel
     if ctx.message.author.id != instructor:
         await ctx.send('Missing Permissions. Please check !help')
         return
     else:
         current_voice_channel = int(channel_id)
-        attendance_list.clear()
+
+        await unload(ctx, 'attendance')
+
         await ctx.message.delete(delay=5.0)
         await ctx.send(f'Current voice channel set to {channel_id}', delete_after=5.0)
 
@@ -137,7 +141,6 @@ async def on_voice_state_update(member, before, after):
             if member.id != instructor:
                 await guild_obj.get_member(member.id).edit(mute=True)
 
-
 # sub routine for done/forcedone to prompt next user
 @client.command()
 async def next(ctx):
@@ -156,7 +159,7 @@ async def next(ctx):
         print(member.voice.mute)
         if not member.voice.mute:
             await forcedone(ctx)
-        if lesson_mode == 'auto':
+        if question_mode == 'auto':
             return
         if not user_queue:
             await ctx.send('Queue Empty')
@@ -174,7 +177,6 @@ async def next(ctx):
         await next(ctx)
         return
 
-
 # auto next bypass instructor checks
 @client.command()
 async def forcenext(ctx):
@@ -189,7 +191,7 @@ async def forcenext(ctx):
         print(member.voice.mute)
         if not member.voice.mute:
             await forcedone(ctx)
-        if lesson_mode == 'auto':
+        if question_mode == 'auto':
             return
         if not user_queue:
             await ctx.send('Queue Empty')
@@ -207,7 +209,6 @@ async def forcenext(ctx):
         await forcenext(ctx)
         return
 
-
 # commands to change question_mode
 @client.command()
 async def qauto(ctx):
@@ -219,7 +220,6 @@ async def qauto(ctx):
     question_mode = 'auto'
     await ctx.message.add_reaction("✅")
 
-
 @client.command()
 async def qsingle(ctx):
     # checks user permissions
@@ -229,7 +229,6 @@ async def qsingle(ctx):
     global question_mode
     question_mode = 'single'
     await ctx.message.add_reaction("✅")
-
 
 # allows current user to end their question
 @client.command()
@@ -262,7 +261,6 @@ async def done(ctx):
     else:
         await ctx.send('You are not currently talking')
 
-
 # allows instructor to toggle next user
 @client.command()
 async def forcedone(ctx):
@@ -285,7 +283,6 @@ async def forcedone(ctx):
         await ctx.send(
             f'There are {len(user_queue)} students in line.')
 
-
 # shows queue
 @client.command()
 async def queue(ctx):
@@ -296,7 +293,6 @@ async def queue(ctx):
         await ctx.send(f'Current Queue: {queuelist}')
     else:
         await ctx.send('Queue is empty!')
-
 
 # queues user to ask a question
 @client.command()
@@ -328,7 +324,6 @@ async def talk(ctx):
         await ctx.send(
             f'{ctx.author.display_name} there are {len(user_queue) - 1} students ahead of you in line.')
 
-
 # starts class
 @client.command()
 async def start(ctx):
@@ -350,7 +345,6 @@ async def start(ctx):
 
     await ctx.send('Lesson Started! All users muted. Hello students!')
 
-
 # ends class
 @client.command()
 async def end(ctx):
@@ -359,35 +353,73 @@ async def end(ctx):
         await ctx.send('Missing Permissions. Please check !help')
         return
 
-    # flushes points to file
-    with open('points.json', 'w') as json_file:
-        json.dump(ptsDatabase, json_file)
-
     # sets lesson mode
     change_lesson_mode(False)
-    change_breakout_mode(False)
 
-    # removes cmall group channels
-    await cleargroup(ctx)
+    # removes small group channels
+    if breakout_rdy == True:
+        change_breakout_mode(False)
+        await cleargroup(ctx)
 
     # unmute all members in the voice channel
     for member in guild_obj.get_channel(current_voice_channel).members:
         await guild_obj.get_member(member.id).edit(mute=False)
 
-    # signing students off
     time_now = datetime.now()
     for x in attendance_list:
         if x.timeout == '':
             x.timeout = f"{time_now.strftime('%X')} [*]"
 
-    # flush attendance list
-
     await flushattendance(ctx)
     await ctx.send('All users unmuted.  That\'s all for now!')
 
+# poll command for creating new polls
+@client.command()
+async def poll(ctx, *, input_string):
+
+    input_list = input_string.split('? ')
+    if len(input_list) != 2:
+        await ctx.send('Formatting for polls should be: `!poll <question>? <option1>:<option2>`')
+        return
+    input_question = input_list[0] + '?'
+    answers = input_list[1].split(':')
+    emoji_list = ["🐌", "🐇", "🐘", "🐖", "🐏", "🐍", "🐬"]
+    output_list = [f"Poll: {input_question} [By: {ctx.author.display_name}]\n"]
+    if len(answers) > 7:
+        await ctx.send('Too many answers, please reduce the number of answers.')
+        return
+    for indx, val in enumerate(answers):
+        output_list.append(emoji_list[indx] + f" - {val}\n")
+    output_string = ''.join([str(elem) for elem in output_list])
+    msg = await ctx.send(output_string)
+    for indx, val in enumerate(answers):
+        await msg.add_reaction(emoji_list[indx])
+    await ctx.message.delete()
+
+# change default help commands
+client.remove_command('help')
+@client.command()
+async def help(ctx):
+    await bothelp(ctx)
+
+# clears user queue for questions
+@client.command()
+async def clearqueue(ctx):
+    guild_obj = get_guild(ctx.guild.name)
+    if ctx.message.author.id != instructor:
+        await ctx.send('Missing Permissions. Please check !help')
+        return
+    global user_queue
+    user_queue = []
+    await ctx.send('Queue has been cleared.')
+
+    # mutes everyone if cleared while unmuted
+    for member in guild_obj.get_channel(current_voice_channel).members:
+        if member.id != instructor:
+            await guild_obj.get_member(member.id).edit(mute=True)
 
 # command to count attendance
-@client.command(pass_context = True , aliases=['join'])
+@client.command(aliases=['join'])
 async def attendance(ctx, *, name: str = None):
     global attendance_list
     if lesson_mode is None or lesson_mode is False:
@@ -414,9 +446,8 @@ async def attendance(ctx, *, name: str = None):
     attendance_file.close()
     await ctx.message.add_reaction("✅")
 
-
 # end of class Student
-@client.command(pass_context = True , aliases=['goodbye'])
+@client.command(aliases=['goodbye'])
 async def leave(ctx):
     global attendance_list
     time_now = datetime.now()
@@ -434,7 +465,6 @@ async def leave(ctx):
             return
     await ctx.send('Student did not sign in!')
 
-
 # get attendance list
 @client.command()
 async def flushattendance(ctx):
@@ -449,54 +479,6 @@ async def flushattendance(ctx):
         attendance_file.write(f'{x.name} | {x.timein} | {x.timeout}\n')
     attendance_file.close()
 
-
-# poll command for creating new polls
-@client.command()
-async def poll(ctx, *, input_string):
-
-    input_list = input_string.split('? ')
-    if len(input_list) != 2:
-        await ctx.send('Formatting for polls should be: `!poll <question>? <option1>:<option2>`')
-        return
-    input_question = input_list[0] + '?'
-    answers = input_list[1].split(':')
-    emoji_list = ["🐌", "🐇", "🐘", "🐖", "🐏", "🐍", "🐬"]
-    output_list = [f"Poll: {input_question} [By: {ctx.author.display_name}]\n"]
-    if len(answers) > 7:
-        await ctx.send('Too many answers, please reduce the number of answers.')
-        return
-    for indx, val in enumerate(answers):
-        output_list.append(emoji_list[indx] + f" - {val}\n")
-    output_string = ''.join([str(elem) for elem in output_list])
-    msg = await ctx.send(output_string)
-    for indx, val in enumerate(answers):
-        await msg.add_reaction(emoji_list[indx])
-    await ctx.message.delete()
-
-
-# change default help commands
-client.remove_command('help')
-@client.command()
-async def help(ctx):
-    await bothelp(ctx)
-
-# clears user queue for questions
-@client.command()
-async def clearqueue(ctx):
-    guild_obj = get_guild(ctx.guild.name)
-    if ctx.message.author.id != instructor:
-        await ctx.send('Missing Permissions. Please check !help')
-        return
-    global user_queue
-    user_queue = []
-    await ctx.send('Queue has been cleared.')
-
-    # mutes everyone if cleared while unmuted
-    for member in guild_obj.get_channel(current_voice_channel).members:
-        if member.id != instructor:
-            await guild_obj.get_member(member.id).edit(mute=True)
-
-
 # url formatter
 def urlify(string):
     # Replace all runs of whitespace with a single dash
@@ -504,7 +486,6 @@ def urlify(string):
     string.replace("\\", "\\\\")
     string = string[1:-1]
     return string
-
 
 # equation render
 @client.command()
@@ -528,7 +509,7 @@ def RepresentsInt(x):
 
 # makes small group rooms
 @client.command()
-async def setupgroup(ctx, *, num=str(group_std)):
+async def setupgroup(ctx, *, num='3'):
     global category_name
     guild_obj = get_guild(ctx.guild.name)
     if ctx.message.author.id != instructor:
@@ -649,68 +630,5 @@ async def bothelp(ctx):
         embed.add_field(name='!poll', value='creates a reaction poll with format [`!poll <question>? <option1>:<option2>`]', inline=False)
         embed.add_field(name='!equation `LaTeX_Equation`', value='renders LaTeX equation as an image in chat', inline=False)
         await ctx.send(embed=embed)
-
-
-# user points section
-@client.command(pass_context = True , aliases=['ptstop'])
-async def pointstop(ctx):
-    global ptsDatabase
-    with open('points.json') as f:
-        ptsDatabase = json.load(f)
-    if not ptsDatabase:
-        await ctx.send('No Data Found.')
-    output_str = "```Class Points\nStudent Name - Number of Points\n"
-    student_keys = []
-    for key in list(ptsDatabase.keys()):
-        student_keys.append(key)
-    student_keys.sort()
-    for student in student_keys:
-        student_name =  student.ljust(12).capitalize()
-        student_pts = ptsDatabase[student]
-        output_str += f'{student_name} - {student_pts}\n'
-    output_str += "```"
-    await ctx.send(output_str)
-    await ctx.message.add_reaction("✅")
-
-
-# add points to students
-@client.command(pass_context = True , aliases=['pts', 'addpts'])
-async def points(ctx, tagged_member : discord.Member, *, pts=1):
-    global ptsDatabase
-    if tagged_member.display_name in list(ptsDatabase.keys()):
-        ptsDatabase[tagged_member.display_name] += pts
-    else:
-        ptsDatabase[tagged_member.display_name] = pts
-    with open('points.json', 'w') as json_file:
-        json.dump(ptsDatabase, json_file)
-    await ctx.message.add_reaction("✅")
-
-# remove points from students
-@client.command()
-async def removepoints(ctx, tagged_member : discord.Member, *, pts=1):
-    global ptsDatabase
-    if tagged_member.display_name in list(ptsDatabase.keys()):
-        if ptsDatabase[tagged_member.display_name] > pts:
-            ptsDatabase[tagged_member.display_name] -= pts
-        else:
-            ptsDatabase[tagged_member.display_name] = 0
-    else:
-        ptsDatabase[tagged_member.display_name] = 0
-    with open('points.json', 'w') as json_file:
-        json.dump(ptsDatabase, json_file)
-    await ctx.message.add_reaction("✅")
-
-# check personal points
-@client.command(pass_context = True , aliases=['mypts'])
-async def mypoints(ctx):
-    global ptsDatabase
-    with open('points.json') as f:
-        ptsDatabase = json.load(f)
-    if ctx.message.author.display_name in list(ptsDatabase.keys()):
-        await ctx.send(f'You currently have {ptsDatabase[ctx.message.author.display_name]} points.')
-    else:
-        await ctx.send(f"It doesn't look like you have points yet.")
-    await ctx.message.add_reaction("✅")
-
 
 client.run(token)
