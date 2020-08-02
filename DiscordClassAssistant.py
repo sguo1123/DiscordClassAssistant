@@ -2,6 +2,7 @@ import discord
 import os
 import configparser
 import re
+import json
 from datetime import datetime
 from discord.ext import commands
 from pathlib import Path, PureWindowsPath
@@ -18,9 +19,9 @@ question_mode = config.get('DEFAULT', 'QuestionMode')
 group_std = config.get('DEFAULT', 'GroupRoomNumber')
 category_name = ''
 
-# New config file for class points
-points = configparser.ConfigParser()
-points.read('points.ini')
+# New global dictionary to store points - flushes to points.json
+ptsDatabase = {}
+
 
 # New Data Class To Handle Student Attendance
 class Student:
@@ -40,7 +41,7 @@ class Student:
 user_queue = []
 lesson_mode = None
 attendance_list = []
-
+breakout_rdy = False
 
 def get_channel(channel_str):
     for guild in client.guilds:
@@ -53,6 +54,12 @@ def get_guild(guild_str):
     for guild in client.guilds:
         if guild.name == guild_str:
             return guild
+
+
+# Subroutine to change breakout status
+def change_breakout_mode(bool):
+    global breakout_rdy
+    breakout_rdy = bool
 
 
 # Subroutine to change lesson_mode
@@ -85,6 +92,15 @@ async def botstop(ctx):
     await ctx.send('Bye Bye')
     await client.logout()
 
+#   catching errors
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.message.add_reaction("❌")
+        await ctx.send('Missing required arguments!')
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.message.add_reaction("❌")
+        await ctx.send('Invalid Command!')
 
 # change active voice channel
 @client.command()
@@ -99,7 +115,6 @@ async def changechannel(ctx, channel_id):
         attendance_list.clear()
         await ctx.message.delete(delay=5.0)
         await ctx.send(f'Current voice channel set to {channel_id}', delete_after=5.0)
-
 
 # update instructor id
 @client.command()
@@ -344,8 +359,13 @@ async def end(ctx):
         await ctx.send('Missing Permissions. Please check !help')
         return
 
+    # flushes points to file
+    with open('points.json', 'w') as json_file:
+        json.dump(ptsDatabase, json_file)
+
     # sets lesson mode
     change_lesson_mode(False)
+    change_breakout_mode(False)
 
     # removes cmall group channels
     await cleargroup(ctx)
@@ -520,7 +540,7 @@ def RepresentsInt(x):
 
 # makes small group rooms
 @client.command()
-async def setgroup(ctx, *, num=str(group_std)):
+async def setupgroup(ctx, *, num=str(group_std)):
     global category_name
     guild_obj = get_guild(ctx.guild.name)
     if ctx.message.author.id != instructor:
@@ -536,19 +556,25 @@ async def setgroup(ctx, *, num=str(group_std)):
         await ctx.guild.create_voice_channel(f'Room {room}', category=category_name)
         room = room + 1
         total = total - 1
+    change_breakout_mode(True)
     await ctx.message.add_reaction("✅")
 
 # clears group rooms
 @client.command()
 async def cleargroup(ctx):
     global category_name
+    global breakout_rdy
     guild_obj = get_guild(ctx.guild.name)
     if ctx.message.author.id != instructor:
         await ctx.send('Missing Permissions. Please check !help')
         return
+    if breakout_rdy == False:
+        await ctx.send('Groups not set up! Please see help documentation')
+        return
     for channel in category_name.channels:
         await channel.delete()
     await category_name.delete()
+    change_breakout_mode(False)
     await ctx.message.add_reaction("✅")
 
 # divide students into group rooms
@@ -558,6 +584,9 @@ async def group(ctx):
     guild_obj = get_guild(ctx.guild.name)
     if ctx.message.author.id != instructor:
         await ctx.send('Missing Permissions. Please check !help')
+        return
+    if breakout_rdy == False:
+        await ctx.send('Groups not set up! Please see help documentation')
         return
     available_channels = []
     current_users = []
@@ -582,6 +611,9 @@ async def regroup(ctx):
     guild_obj = get_guild(ctx.guild.name)
     if ctx.message.author.id != instructor:
         await ctx.send('Missing Permissions. Please check !help')
+        return
+    if breakout_rdy == False:
+        await ctx.send('Groups not set up! Please see help documentation')
         return
     available_channels = []
     for channel in category_name.voice_channels:
@@ -630,29 +662,67 @@ async def bothelp(ctx):
         embed.add_field(name='!equation `LaTeX_Equation`', value='renders LaTeX equation as an image in chat', inline=False)
         await ctx.send(embed=embed)
 
+
 # user points section
 @client.command()
 async def pointstop(ctx):
-    global points
-    student_keys = []
+    global ptsDatabase
+    with open('points.json') as f:
+        ptsDatabase = json.load(f)
+    if not ptsDatabase:
+        await ctx.send('No Data Found.')
     output_str = "```Class Points\nStudent Name - Number of Points\n"
-    for key in points['Class Points']:
+    student_keys = []
+    for key in list(ptsDatabase.keys()):
         student_keys.append(key)
     student_keys.sort()
-    if !student_keys:
-        await ctx.send('No Data Found.')
-        return
     for student in student_keys:
         student_name =  student.ljust(12).capitalize()
-        student_pts = str(points['Class Points'][student])
+        student_pts = ptsDatabase[student]
         output_str += f'{student_name} - {student_pts}\n'
     output_str += "```"
     await ctx.send(output_str)
     await ctx.message.add_reaction("✅")
 
-# sample code for adding points/students/keys
-#points['Class Points'][f'{ctx.message.author.display_name}'] = '1'
-#with open('points.ini', 'w') as configfile:
-    #points.write(configfile)
+
+# add points to students
+@client.command()
+async def points(ctx, tagged_member : discord.Member, *, pts=1):
+    global ptsDatabase
+    if tagged_member.display_name in list(ptsDatabase.keys()):
+        ptsDatabase[tagged_member.display_name] += pts
+    else:
+        ptsDatabase[tagged_member.display_name] = pts
+    with open('points.json', 'w') as json_file:
+        json.dump(ptsDatabase, json_file)
+    await ctx.message.add_reaction("✅")
+
+# remove points from students
+@client.command()
+async def removepoints(ctx, tagged_member : discord.Member, *, pts=1):
+    global ptsDatabase
+    if tagged_member.display_name in list(ptsDatabase.keys()):
+        if ptsDatabase[tagged_member.display_name] > pts:
+            ptsDatabase[tagged_member.display_name] -= pts
+        else:
+            ptsDatabase[tagged_member.display_name] = 0
+    else:
+        ptsDatabase[tagged_member.display_name] = 0
+    with open('points.json', 'w') as json_file:
+        json.dump(ptsDatabase, json_file)
+    await ctx.message.add_reaction("✅")
+
+# check personal points
+@client.command()
+async def mypoints(ctx):
+    global ptsDatabase
+    with open('points.json') as f:
+        ptsDatabase = json.load(f)
+    if ctx.message.author.display_name in list(ptsDatabase.keys()):
+        await ctx.send(f'You currently have {ptsDatabase[ctx.message.author.display_name]} points.')
+    else:
+        await ctx.send(f"It doesn't look like you have points yet.")
+    await ctx.message.add_reaction("✅")
+
 
 client.run(token)
