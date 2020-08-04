@@ -18,9 +18,7 @@ class Equation(commands.Cog):
     # equation render
     @commands.command()
     async def equation(self, ctx, *, equation):
-        await ctx.send('test1')
         equation = urlify(equation)
-        await ctx.send('test2')
         equ_url = f'https://latex.codecogs.com/png.latex?\\dpi{{200}}&space;\\bg_white&space;{equation}'
         print(equ_url)
         equ = discord.Embed()

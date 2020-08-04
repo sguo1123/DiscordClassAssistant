@@ -15,9 +15,16 @@ token = config.get('DEFAULT', 'Token')
 instructor = int(config.get('DEFAULT', 'Instructor'))
 current_voice_channel = int(config.get('DEFAULT', 'CurrentVoiceChannel'))
 question_mode = config.get('DEFAULT', 'QuestionMode')
-group_std = config.get('DEFAULT', 'GroupRoomNumber')
 category_name = ''
-active_extensions = ['points', 'equation', 'helpmsg']
+active_extensions = ['helpmsg']
+
+# Checking extensions
+if bool(config.get('EXTENTIONS','Points')):
+    active_extensions.append('points')
+if bool(config.get('EXTENTIONS','Equation')):
+    active_extensions.append('equation')
+if bool(config.get('EXTENTIONS','Wolfram')):
+    active_extensions.append('wolfram')
 
 # Attendance list storage
 attendance_list = []
