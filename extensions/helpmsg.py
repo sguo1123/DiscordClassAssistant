@@ -42,6 +42,8 @@ embed.add_field(name='!poll', value='creates a reaction poll with format [`!poll
 embed.add_field(name='!equation `LaTeX_Equation`', value='renders LaTeX equation as an image in chat', inline=False)
 embed.add_field(name='!mypoints', value='returns number of points tied to your account', inline=False)
 embed.add_field(name='!pointslist', value='returns list of all points in class', inline=False)
+embed.add_field(name='!computewolf `query`', value='returns wolfram alpha result for math request', inline=False)
+embed.add_field(name='!graphwolf `query`', value='returns wolfram alpha result w/ attached graph', inline=False)
 
 class Help(commands.Cog):
 
